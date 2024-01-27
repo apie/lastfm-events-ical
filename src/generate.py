@@ -6,6 +6,7 @@ import typer
 from requests_html import HTMLSession
 
 from os import path
+from pathlib import Path
 from sys import argv
 from icalendar import Event, Calendar
 from datetime import timedelta, datetime
@@ -62,9 +63,15 @@ def generate_ical(username: str, year: str = "", print_only: bool = False):
         event.add("dtstamp", now)
         cal.add_component(event)
 
+    Path(path.join(path.dirname(path.realpath(argv[0])), "..", "data")).mkdir(
+        exist_ok=True
+    )
     with open(
         path.join(
-            path.dirname(path.realpath(argv[0])), f"lastfm_events_{username}_{year}.ics"
+            path.dirname(path.realpath(argv[0])),
+            "..",
+            "data",
+            f"lastfm_events_{username}_{year}.ics",
         ),
         "wb",
     ) as f:
