@@ -54,7 +54,7 @@ def generate_ical(username: str, year: str = "", print_only: bool = False):
         date_obj, link, title, lineup, location = event_tuple
         location = location.replace("\n", ", ")
         event = Event()
-        event.add("uid", str(now) + title)
+        event.add("uid", str(now) + title + str(date_obj))
         event.add("summary", f"{title} at {location}")
         event.add("location", location)
         event.add("description", f"{title} + {lineup}. Link: {link}")
