@@ -5,6 +5,7 @@
 import typer
 from requests_html import HTMLSession
 
+from typing import Generator
 from os import path
 from pathlib import Path
 from sys import argv
@@ -41,7 +42,19 @@ class SimpleCache:
 
         cached = self.CACHE_DIR / name
         cached.write_text(json.dumps(content, default=default))
+        return content
 
+def use_cache(cache: SimpleCache, func, *args):
+    key = f"{func.__name__}_{'_'.join(args)}"
+    cached = cache.get(key)
+    if cached:
+        # print("Found in cache")
+        return cached
+    new_val = func(*args)
+    if isinstance(new_val, Generator):
+        # Converting generator to list to save in cache
+        new_val = list(new_val)
+    return cache.set(key, new_val)
 
 class LfmEventGetter:
     use_cache: False
@@ -53,13 +66,7 @@ class LfmEventGetter:
         self.cache = SimpleCache() if use_cache else None
 
     def _cached_get_events(self, username: str, year: str):
-        cached = self.cache.get(f"get_events_{username}_{year}")
-        if cached:
-            # print("Reading from cache")
-            return cached
-        result = list(self._get_events(username, year))
-        self.cache.set(f"get_events_{username}_{year}", result)
-        return result
+        return use_cache(self.cache, self._get_events, username, year)
 
     def get_events(self, username: str, year: str):
         if self.use_cache:
@@ -67,6 +74,7 @@ class LfmEventGetter:
         return self._get_events(username, year)
 
     def _get_events(self, username: str, year: str):
+        # print('Making real call')
         # No year means upcoming events
         base_url = f"https://www.last.fm/user/{username}/events/{year}"
         url = base_url
